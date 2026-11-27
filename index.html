@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ราฟาเอล AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070b1a;--ink:#e6f6ff;--glow:#5ee7ff;--soft:#8fa8c8}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 35%,#16234a 0%,#070b1a 65%);color:var(--ink);font:16px/1.5 'Prompt',sans-serif;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(94,231,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(94,231,255,.06) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%)}
+h1{margin:20px 0 0;font-size:28px;font-weight:600;letter-spacing:.02em}
+.status{color:var(--soft);font-size:15px;min-height:24px}
+.stage{position:relative;width:min(420px,92vw);aspect-ratio:4/5}
+.stage svg{width:100%;height:100%;overflow:visible}
+.float{animation:float 4s ease-in-out infinite;transform-origin:200px 300px}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(.6deg)}}
+.ring{animation:spin 6s linear infinite}
+.ring2{animation-duration:9s;animation-direction:reverse}
+@keyframes spin{to{stroke-dashoffset:-160}}
+.eye{transform-box:fill-box;transform-origin:center;transition:transform .08s}
+.blink .eye{transform:scaleY(.08)}
+.hair-l,.hair-r{transform-box:fill-box;animation:sway 5s ease-in-out infinite}
+.hair-l{transform-origin:top right}.hair-r{transform-origin:top left;animation-delay:-2.5s}
+@keyframes sway{0%,100%{transform:rotate(0)}50%{transform:rotate(1.5deg)}}
+.aura{transition:opacity .3s}
+.speaking .aura{opacity:1!important}
+.listening .ring{stroke:#ffd36e}
+.spark{animation:rise 6s linear infinite;opacity:0}
+@keyframes rise{0%{transform:translateY(0);opacity:0}20%{opacity:.9}100%{transform:translateY(-220px);opacity:0}}
+button{font:600 18px 'Prompt',sans-serif;padding:14px 34px;border-radius:40px;border:1px solid var(--glow);background:rgba(94,231,255,.12);color:var(--ink);cursor:pointer;box-shadow:0 0 24px rgba(94,231,255,.3);min-height:48px}
+button:hover{background:rgba(94,231,255,.22)}
+button.on{border-color:#ff7a9a;background:rgba(255,122,154,.15);box-shadow:0 0 24px rgba(255,122,154,.3)}
+button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.log{width:min(560px,92vw);margin:18px 0 32px;display:flex;flex-direction:column;gap:8px}
+.msg{padding:10px 14px;border-radius:14px;font-size:15px;max-width:85%}
+.msg.ai{background:rgba(94,231,255,.1);border:1px solid rgba(94,231,255,.25);align-self:flex-start}
+.msg.user{background:rgba(255,255,255,.08);align-self:flex-end}
+@media (prefers-reduced-motion:reduce){.float,.ring,.hair-l,.hair-r,.spark{animation:none}}
+</style>
+</head>
+<body>
+<h1>ราฟาเอล</h1>
+<div class="status" id="status">กดปุ่มด้านล่างเพื่อเริ่มคุย</div>
+
+<div class="stage" id="stage">
+<svg viewBox="0 0 400 500" aria-label="ตัวละครราฟาเอล">
+  <defs>
+    <radialGradient id="auraG" cx="50%" cy="45%" r="50%"><stop offset="0" stop-color="#5ee7ff" stop-opacity=".45"/><stop offset="1" stop-color="#5ee7ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="hairG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2fbff"/><stop offset=".6" stop-color="#bfe3f5"/><stop offset="1" stop-color="#7fb8e0"/></linearGradient>
+    <linearGradient id="skinG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1e8"/><stop offset="1" stop-color="#f7d9c9"/></linearGradient>
+    <radialGradient id="irisG" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#d6fbff"/><stop offset=".5" stop-color="#3cc8f0"/><stop offset="1" stop-color="#1a4f9c"/></radialGradient>
+    <linearGradient id="dressG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3f7a"/><stop offset="1" stop-color="#121c3d"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <circle class="aura" cx="200" cy="230" r="200" fill="url(#auraG)" opacity=".35"/>
+  <g id="sparks"></g>
+
+  <g class="float">
+    <ellipse class="ring" cx="200" cy="160" rx="160" ry="34" fill="none" stroke="#5ee7ff" stroke-width="2" stroke-dasharray="6 10" opacity=".7" filter="url(#glow)"/>
+    <ellipse class="ring ring2" cx="200" cy="160" rx="135" ry="26" fill="none" stroke="#a9f3ff" stroke-width="1.2" stroke-dasharray="2 8" opacity=".6"/>
+
+    <!-- back hair -->
+    <path d="M200 70 Q110 78 112 190 L150 300 L250 300 L288 190 Q290 78 200 70 Z" fill="url(#hairG)"/>
+    <path class="hair-l" d="M200 72 Q108 80 112 190 L96 400 Q130 430 170 405 L185 250 Z" fill="url(#hairG)"/>
+    <path class="hair-r" d="M200 72 Q292 80 288 190 L304 400 Q270 430 230 405 L215 250 Z" fill="url(#hairG)"/>
+
+    <!-- body -->
+    <path d="M100 500 Q108 352 200 330 Q292 352 300 500 Z" fill="url(#dressG)"/>
+    <path d="M160 338 L200 392 L240 338" fill="none" stroke="#5ee7ff" stroke-width="2.5" filter="url(#glow)"/>
+    <circle cx="200" cy="400" r="7" fill="#5ee7ff" filter="url(#glow)"/>
+    <rect x="184" y="272" width="32" height="66" rx="12" fill="#f3d2c1"/>
+
+    <!-- face -->
+    <path d="M136 172 Q136 118 200 113 Q264 118 264 172 L261 222 Q254 272 200 294 Q146 272 139 222 Z" fill="url(#skinG)"/>
+    <ellipse cx="158" cy="238" rx="13" ry="6" fill="#ffadb8" opacity=".45"/>
+    <ellipse cx="242" cy="238" rx="13" ry="6" fill="#ffadb8" opacity=".45"/>
+
+    <!-- eyes -->
+    <g id="eyes">
+      <g class="eye">
+        <ellipse cx="170" cy="210" rx="17" ry="14" fill="#fff"/>
+        <circle cx="170" cy="211" r="11" fill="url(#irisG)"/>
+        <circle cx="170" cy="212" r="4.5" fill="#0c2350"/>
+        <circle cx="165" cy="206" r="3.2" fill="#fff"/>
+        <path d="M152 204 Q170 190 188 204" fill="none" stroke="#3a4f7a" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <g class="eye">
+        <ellipse cx="230" cy="210" rx="17" ry="14" fill="#fff"/>
+        <circle cx="230" cy="211" r="11" fill="url(#irisG)"/>
+        <circle cx="230" cy="212" r="4.5" fill="#0c2350"/>
+        <circle cx="225" cy="206" r="3.2" fill="#fff"/>
+        <path d="M212 204 Q230 190 248 204" fill="none" stroke="#3a4f7a" stroke-width="3" stroke-linecap="round"/>
+      </g>
+    </g>
+    <path d="M156 184 Q170 178 184 183 M216 183 Q230 178 244 184" fill="none" stroke="#9cc3dc" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M200 228 L198 238" stroke="#e3b5a3" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- mouth -->
+    <ellipse id="mouth" cx="200" cy="258" rx="9" ry="1.5" fill="#c4566b"/>
+
+    <!-- bangs -->
+    <path d="M128 192 Q118 92 200 86 Q282 92 272 192 Q262 150 242 138 Q238 176 216 186 Q212 150 198 138 Q186 178 164 184 Q166 150 152 144 Q142 172 128 192 Z" fill="url(#hairG)"/>
+    <path d="M262 150 l10 -14 l10 14 l-10 14 Z" fill="#5ee7ff" filter="url(#glow)"/>
+  </g>
+</svg>
+</div>
+
+<button id="btn">เริ่มคุยกับราฟาเอล</button>
+<div class="log" id="log" aria-live="polite"></div>
+
+<script type="module">
+{
+const AGENT_ID = 'agent_4801m8dw8zahethsw4c2qbyr9ndn';
+const stage = document.getElementById('stage');
+const mouth = document.getElementById('mouth');
+const btn = document.getElementById('btn');
+const statusEl = document.getElementById('status');
+const log = document.getElementById('log');
+let conv = null, mode = 'idle', busy = false;
+
+// sparkles
+const sp = document.getElementById('sparks');
+for (let i = 0; i < 14; i++) {
+  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('cx', 60 + Math.random() * 280);
+  c.setAttribute('cy', 380 + Math.random() * 100);
+  c.setAttribute('r', 1 + Math.random() * 2.2);
+  c.setAttribute('fill', '#a9f3ff');
+  c.setAttribute('class', 'spark');
+  c.style.animationDelay = (-Math.random() * 6) + 's';
+  sp.appendChild(c);
+}
+
+// blinking
+function blink() {
+  stage.classList.add('blink');
+  setTimeout(() => stage.classList.remove('blink'), 130);
+  setTimeout(blink, 2200 + Math.random() * 3000);
+}
+setTimeout(blink, 1500);
+
+// mouth sync
+let ry = 1.5;
+function tick() {
+  let target = 1.5;
+  if (conv && mode === 'speaking') {
+    let v = 0;
+    try { v = conv.getOutputVolume(); } catch (e) {}
+    target = 1.5 + Math.min(v * 30, 9);
+  }
+  ry += (target - ry) * 0.45;
+  mouth.setAttribute('ry', ry.toFixed(2));
+  mouth.setAttribute('rx', (9 - Math.min(ry, 8) * 0.25).toFixed(2));
+  requestAnimationFrame(tick);
+}
+tick();
+
+function addMsg(text, who) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.textContent = text;
+  log.prepend(d);
+  while (log.children.length > 8) log.lastChild.remove();
+}
+
+function setMode(m) {
+  mode = m;
+  stage.classList.toggle('speaking', m === 'speaking');
+  stage.classList.toggle('listening', m === 'listening');
+  statusEl.textContent = m === 'speaking' ? 'ราฟาเอลกำลังพูด…' : m === 'listening' ? 'กำลังฟังท่านมาสเตอร์…' : statusEl.textContent;
+}
+
+async function start() {
+  busy = true;
+  statusEl.textContent = 'กำลังเชื่อมต่อ…';
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    const { Conversation } = await import('https://cdn.jsdelivr.net/npm/@elevenlabs/client/+esm');
+    conv = await Conversation.startSession({
+      agentId: AGENT_ID,
+      connectionType: 'websocket',
+      onConnect: () => { statusEl.textContent = 'เชื่อมต่อแล้ว'; btn.textContent = 'วางสาย'; btn.classList.add('on'); },
+      onDisconnect: () => { conv = null; setMode('idle'); statusEl.textContent = 'จบการสนทนาแล้ว'; btn.textContent = 'เริ่มคุยกับราฟาเอล'; btn.classList.remove('on'); },
+      onModeChange: (m) => setMode(m.mode),
+      onMessage: (m) => { if (m && m.message) addMsg(m.message, m.source === 'ai' ? 'ai' : 'user'); },
+      onError: (e) => { statusEl.textContent = 'เกิดข้อผิดพลาด: ' + (e && e.message ? e.message : e); }
+    });
+  } catch (e) {
+    statusEl.textContent = e && e.name === 'NotAllowedError'
+      ? 'ต้องอนุญาตให้ใช้ไมโครโฟนก่อนนะคะ'
+      : 'เชื่อมต่อไม่สำเร็จ: ' + (e && e.message ? e.message : e);
+    conv = null;
+  }
+  busy = false;
+}
+
+btn.addEventListener('click', async () => {
+  if (busy) return;
+  if (conv) { await conv.endSession(); return; }
+  start();
+});
+}
+</script>
+</body>
+</html>
