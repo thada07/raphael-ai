@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>J.A.R.V.I.S.</title>
-<script src="https://js.puter.com/v2/"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -75,13 +74,6 @@ button.b.on{background:var(--c);color:#02121c}
 <form class="controls" id="f"><input id="txt" placeholder="พิมพ์คำสั่งถึง JARVIS…" autocomplete="off"><button class="b" type="submit">ส่ง</button></form>
 <div class="opts">
   <button class="b" id="hf" type="button" aria-pressed="false">ฟังต่อเนื่อง: ปิด</button>
-  <select id="eng" aria-label="แหล่งเสียง">
-    <option value="onyx">เสียงผู้ชาย AI: Onyx (ทุ้ม)</option>
-    <option value="ash">เสียงผู้ชาย AI: Ash</option>
-    <option value="echo">เสียงผู้ชาย AI: Echo</option>
-    <option value="ballad">เสียงผู้ชาย AI: Ballad</option>
-    <option value="device">เสียงในเครื่อง</option>
-  </select>
   <select id="vsel" aria-label="เลือกเสียงในเครื่อง"></select>
 </div>
 <div id="log" aria-live="polite"></div>
@@ -142,15 +134,13 @@ function loadVoices(){
   let saved=null;try{saved=localStorage.getItem('jarvisVoice')}catch(e){}
   sel.innerHTML='';list.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});
   const male=th.find(v=>/male|ชาย|niwat|pattara/i.test(v.name)&&!/female/i.test(v.name));
-  voice=list.find(v=>v.name===saved)||male||th[0]||null;
+  voice=th.find(v=>v.name===saved)||male||th[0]||list.find(v=>v.name===saved)||null;
   if(voice)sel.value=list.indexOf(voice);
   sel.onchange=()=>{voice=list[sel.value];try{localStorage.setItem('jarvisVoice',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
 }
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
-let engine='onyx';try{engine=localStorage.getItem('jarvisEngine')||'onyx'}catch(e){}
-const eng=$('eng');eng.value=engine;
+let engine='device';
 const showV=()=>{$('vsel').style.display=engine==='device'?'':'none';$('vname').textContent=engine==='device'?(voice?voice.name.slice(0,16):'ในเครื่อง'):'AI '+engine};
-eng.onchange=()=>{engine=eng.value;try{localStorage.setItem('jarvisEngine',engine)}catch(e){};showV();speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
 setTimeout(showV,0);
 const player=new Audio();player.playsInline=true;let unlocked=false;
 function unlock(){if(unlocked)return;unlocked=true;player.src='data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAABgAAAykAWlpaWlpaWlpaWlpaWlpaWnt7e3t7e3t7e3t7e3t7e3t7nJycnJycnJycnJycnJycnL29vb29vb29vb29vb29vb293t7e3t7e3t7e3t7e3t7e3t7/////////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQCowAAAAAAAAMpso+sIAAAAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxKMAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';player.play().catch(()=>{})}
@@ -165,22 +155,9 @@ function deviceSpeak(text){
     next();
   });
 }
-async function aiSpeak(text){
-  if(!window.puter)throw new Error('no puter');
-  const tts=puter.ai.txt2speech(text,{provider:'openai',model:'gpt-4o-mini-tts',voice:engine,
-    instructions:'Speak Thai naturally like J.A.R.V.I.S. from Iron Man: a calm, deep, confident, polite British-butler male voice, slightly fast, with subtle dry wit.'});
-  const el=await Promise.race([tts,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),20000))]);
-  const src=el&&(el.src||el.currentSrc);if(!src)throw new Error('no audio');
-  await new Promise((res,rej)=>{player.onended=res;player.onerror=()=>rej(new Error('play'));player.src=src;player.play().catch(rej)});
-}
 async function speak(text){
   stopAll();
   const clean=text.replace(/[*#_`>]/g,'').replace(/https?:\S+/g,'').trim();if(!clean)return;
-  if(engine!=='device'){
-    setMode('thinking','กำลังสร้างเสียง…');
-    try{setMode('speaking');await aiSpeak(clean);setMode('idle');return}
-    catch(e){console.warn('AI voice failed',e)}
-  }
   setMode('speaking');await deviceSpeak(clean);setMode('idle');
 }
 
@@ -225,12 +202,6 @@ function local(q){
 /* ---------- AI brain (free Pollinations) ---------- */
 const SYS='คุณคือ J.A.R.V.I.S. ผู้ช่วย AI ส่วนตัวแบบในภาพยนตร์ Iron Man สุภาพแบบพ่อบ้านอังกฤษ ฉลาด ใจเย็น มีอารมณ์ขันแห้งๆ เล็กน้อย เรียกผู้ใช้ว่า "ท่าน" ลงท้ายด้วย "ครับ" ตอบเป็นภาษาไทย (หรือภาษาที่ผู้ใช้พูด) สั้น กระชับ 1-3 ประโยค เพราะคำตอบจะถูกอ่านออกเสียง ห้ามใช้ markdown สัญลักษณ์ หรือรายการหัวข้อ ถ้าไม่แน่ใจข้อมูลล่าสุดให้บอกตรงๆ';
 let last=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));
-async function puterBrain(msgs){
-  if(!window.puter)throw new Error('no puter');
-  const r=await Promise.race([puter.ai.chat(msgs,{model:'gpt-4o-mini'}),new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),25000))]);
-  const c=r&&r.message&&r.message.content;const t=typeof c==='string'?c:Array.isArray(c)?c.map(x=>x.text||'').join(''):String(r||'');
-  if(!t.trim())throw new Error('empty');return t.trim();
-}
 async function pollBrain(msgs,tries=0){
   const gap=Date.now()-last;if(gap<30500){setMode('thinking','AI ฟรีต้องรอคิว '+Math.ceil((30500-gap)/1000)+' วิ…');await wait(30500-gap)}
   setMode('thinking');last=Date.now();
@@ -240,7 +211,6 @@ async function pollBrain(msgs,tries=0){
 }
 async function brain(q){
   const msgs=[{role:'system',content:SYS+' เวลาตอนนี้: '+new Date().toLocaleString('th-TH')},...history.slice(-10)];
-  try{return await puterBrain(msgs)}catch(e){console.warn('puter chat failed',e)}
   return pollBrain(msgs);
 }
 
