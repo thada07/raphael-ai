@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>J.A.R.V.I.S.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#02070d;--ink:#d8f6ff;--c:#3fd8ff;--c2:#9befff;--dim:#5d8ea3;--warn:#ffb648;--red:#ff4d5e}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(ellipse at 50% 38%,#0b2a3d 0%,#03111c 45%,#02070d 80%);color:var(--ink);font:16px/1.5 'Prompt',sans-serif;overflow-x:clip;display:flex;flex-direction:column;align-items:center}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(63,216,255,.035) 0 1px,transparent 1px 3px);z-index:5}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(63,216,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(63,216,255,.05) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 70%)}
+header{width:min(1100px,100%);display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0;font:500 13px 'Orbitron',sans-serif;color:var(--dim);letter-spacing:.08em;z-index:2}
+header b{color:var(--c);font-weight:700;font-size:15px}
+main{width:min(1100px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr);gap:12px;padding:8px 16px;align-items:center;z-index:2}
+.panel{border:1px solid rgba(63,216,255,.25);background:rgba(4,24,36,.55);border-radius:4px;padding:12px 14px;font-size:13px;position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.panel h3{margin:0 0 8px;font:500 11px 'Orbitron',sans-serif;color:var(--c);letter-spacing:.12em}
+.row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed rgba(63,216,255,.12)}
+.row span:last-child{color:var(--c2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:4px;background:rgba(63,216,255,.15);margin:2px 0 6px}.bar i{display:block;height:100%;background:var(--c);box-shadow:0 0 8px var(--c);transition:width .6s}
+.big{font:700 clamp(26px,4vw,38px) 'Orbitron',sans-serif;color:var(--ink);text-shadow:0 0 14px rgba(63,216,255,.6);line-height:1.1}
+.stack{display:flex;flex-direction:column;gap:12px}
+#core{position:relative;aspect-ratio:1;width:100%;max-width:440px;margin:auto;cursor:pointer;border:0;background:none;padding:0;border-radius:50%}
+#core:focus-visible{outline:2px solid var(--c);outline-offset:6px}
+#core canvas{width:100%;height:100%;display:block}
+#state{text-align:center;font:500 14px 'Orbitron',sans-serif;letter-spacing:.14em;color:var(--c);margin-top:4px;min-height:22px}
+#heard{text-align:center;color:var(--dim);font-size:14px;min-height:21px;padding:0 8px}
+.controls{width:min(640px,100%);display:flex;gap:8px;padding:10px 16px;z-index:2}
+.controls input{flex:1;font:16px 'Prompt',sans-serif;background:rgba(4,24,36,.7);color:var(--ink);border:1px solid rgba(63,216,255,.35);border-radius:3px;padding:10px 12px;min-height:46px}
+.controls input:focus{outline:none;border-color:var(--c);box-shadow:0 0 12px rgba(63,216,255,.35)}
+button.b{font:500 13px 'Orbitron',sans-serif;letter-spacing:.06em;color:var(--ink);background:rgba(63,216,255,.12);border:1px solid var(--c);border-radius:3px;padding:0 14px;min-height:46px;cursor:pointer}
+button.b:hover{background:rgba(63,216,255,.24)}button.b:focus-visible{outline:2px solid #fff;outline-offset:2px}
+button.b.on{background:var(--c);color:#02121c}
+.opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:0 16px 6px;z-index:2;font-size:13px;color:var(--dim)}
+.opts select{font:14px 'Prompt',sans-serif;background:#04131f;color:var(--ink);border:1px solid rgba(63,216,255,.3);border-radius:3px;min-height:40px;max-width:240px;padding:0 6px}
+#log{width:min(720px,100%);padding:6px 16px 28px;display:flex;flex-direction:column;gap:8px;z-index:2}
+.m{padding:9px 13px;font-size:15px;max-width:88%;border-left:2px solid var(--c);background:rgba(63,216,255,.07)}
+.m.u{align-self:flex-end;border-left:0;border-right:2px solid var(--dim);background:rgba(255,255,255,.05);text-align:right}
+.m a{color:var(--c2)}
+.tip{color:var(--dim);font-size:12.5px;line-height:1.6}
+#timers .row span:last-child{color:var(--warn)}
+@media(max-width:760px){main{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}main>.core-wrap{grid-column:1/-1;order:-1}#core{max-width:330px}.panel{font-size:12.5px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><b>J.A.R.V.I.S.</b><span id="clockS">--:--</span></header>
+
+<main>
+  <div class="stack">
+    <div class="panel"><h3>เวลา</h3><div class="big" id="clock">--:--</div><div id="date" class="tip"></div></div>
+    <div class="panel"><h3>ระบบ</h3>
+      <div class="row"><span>แบตเตอรี่</span><span id="bat">—</span></div><div class="bar"><i id="batBar" style="width:0"></i></div>
+      <div class="row"><span>เครือข่าย</span><span id="net">—</span></div>
+      <div class="row"><span>เสียงพูด</span><span id="vname">—</span></div>
+    </div>
+  </div>
+
+  <div class="core-wrap">
+    <button id="core" aria-label="แตะเพื่อสั่ง JARVIS"><canvas id="cv"></canvas></button>
+    <div id="state">แตะเพื่อปลุกระบบ</div>
+    <div id="heard"></div>
+  </div>
+
+  <div class="stack">
+    <div class="panel"><h3>ตัวจับเวลา</h3><div id="timers"><div class="tip">ยังไม่มี — ลองพูด "จับเวลา 5 นาที"</div></div></div>
+    <div class="panel"><h3>คำสั่งเสียง</h3><div class="tip">"กี่โมงแล้ว" · "เปิด YouTube"<br>"เปิดเพลง ลาลาลอย"<br>"ค้นหา ร้านกาแฟใกล้ฉัน"<br>"แบตเหลือเท่าไหร่"<br>หรือถามอะไรก็ได้</div></div>
+  </div>
+</main>
+
+<form class="controls" id="f"><input id="txt" placeholder="พิมพ์คำสั่งถึง JARVIS…" autocomplete="off"><button class="b" type="submit">ส่ง</button></form>
+<div class="opts">
+  <button class="b" id="hf" type="button" aria-pressed="false">ฟังต่อเนื่อง: ปิด</button>
+  <select id="vsel" aria-label="เลือกเสียง"></select>
+</div>
+<div id="log" aria-live="polite"></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),core=$('core'),stateEl=$('state'),heard=$('heard'),log=$('log');
+let mode='idle',level=0,booted=false,handsFree=false,history=[],voice=null,rec=null,recOn=false;
+
+/* ---------- Arc reactor HUD ---------- */
+function size(){const r=core.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.width*d}
+const ro=new ResizeObserver(size);ro.observe(core);
+const colors={idle:'63,216,255',listening:'255,182,72',thinking:'155,239,255',speaking:'63,216,255'};
+let t=0;
+function draw(){
+  t+=1/60;const W=cv.width,c=W/2,R=W*0.46;ctx.clearRect(0,0,W,W);
+  const col=colors[mode];
+  const target=mode==='speaking'?0.45+0.55*Math.abs(Math.sin(t*9)*Math.sin(t*5.3)):mode==='listening'?0.35+0.2*Math.sin(t*4):mode==='thinking'?0.3:0.12;
+  level+=(target-level)*0.2;
+  const g=ctx.createRadialGradient(c,c,0,c,c,R);g.addColorStop(0,`rgba(${col},${0.35+level*0.5})`);g.addColorStop(.35,`rgba(${col},${0.08+level*0.15})`);g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(c,c,R,0,7);ctx.fill();
+  ctx.lineCap='round';
+  const ring=(r,w,a,seg,gap,rot,alpha)=>{ctx.strokeStyle=`rgba(${col},${alpha})`;ctx.lineWidth=w;const step=Math.PI*2/seg;for(let i=0;i<seg;i++){ctx.beginPath();ctx.arc(c,c,r,rot+i*step,rot+i*step+step*(1-gap));ctx.stroke()}};
+  const sp=mode==='thinking'?3:1;
+  ring(R*.96,W*.004,0,72,.55,t*.05,.35);
+  ring(R*.86,W*.012,0,3,.18,t*.4*sp,.85);
+  ring(R*.76,W*.006,0,24,.4,-t*.25*sp,.6);
+  ring(R*.66,W*.018,0,10,.3,t*.15,.45+level*.4);
+  // waveform ring
+  ctx.strokeStyle=`rgba(${col},.9)`;ctx.lineWidth=W*.004;ctx.beginPath();
+  for(let i=0;i<=120;i++){const a=i/120*Math.PI*2,n=Math.sin(a*8+t*6)*Math.sin(a*3-t*4);const r=R*.52+n*R*.06*level*2;const x=c+Math.cos(a)*r,y=c+Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}
+  ctx.closePath();ctx.stroke();
+  // triangle core
+  ctx.save();ctx.translate(c,c);ctx.rotate(-Math.PI/2);ctx.strokeStyle=`rgba(${col},${.7+level*.3})`;ctx.lineWidth=W*.01;ctx.beginPath();
+  for(let i=0;i<3;i++){const a=i*Math.PI*2/3,r=R*.3;i?ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r):ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r)}ctx.closePath();ctx.stroke();ctx.restore();
+  const cg=ctx.createRadialGradient(c,c,0,c,c,R*.22);cg.addColorStop(0,'rgba(255,255,255,.95)');cg.addColorStop(.4,`rgba(${col},${.6+level*.4})`);cg.addColorStop(1,`rgba(${col},0)`);
+  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(c,c,R*.22*(1+level*.25),0,7);ctx.fill();
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+function setMode(m,label){mode=m;stateEl.textContent=label||{idle:'พร้อมรับคำสั่ง',listening:'กำลังฟัง…',thinking:'กำลังวิเคราะห์…',speaking:'กำลังตอบ…'}[m];stateEl.style.color=m==='listening'?'var(--warn)':'var(--c)'}
+
+/* ---------- Clock / system ---------- */
+function tick(){const d=new Date();const hm=d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});$('clock').textContent=hm;$('clockS').textContent=d.toLocaleTimeString('th-TH');$('date').textContent=d.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+setInterval(tick,1000);tick();
+let battery=null;
+if(!navigator.getBattery)$('bat').textContent='ไม่รองรับ';
+if(navigator.getBattery)navigator.getBattery().then(b=>{battery=b;const u=()=>{const p=Math.round(b.level*100);$('bat').textContent=p+'%'+(b.charging?' ⚡':'');$('batBar').style.width=p+'%'};u();b.onlevelchange=u;b.onchargingchange=u}).catch(()=>{});
+const netU=()=>{$('net').textContent=navigator.onLine?'ออนไลน์':'ออฟไลน์'};addEventListener('online',netU);addEventListener('offline',netU);netU();
+
+/* ---------- Voice out ---------- */
+function loadVoices(){
+  const vs=speechSynthesis.getVoices();if(!vs.length)return;
+  const th=vs.filter(v=>/^th/i.test(v.lang)),en=vs.filter(v=>/^en-GB/i.test(v.lang));
+  const list=[...th,...en];const sel=$('vsel');
+  let saved=null;try{saved=localStorage.getItem('jarvisVoice')}catch(e){}
+  sel.innerHTML='';list.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});
+  const male=th.find(v=>/male|ชาย|niwat|pattara/i.test(v.name)&&!/female/i.test(v.name));
+  voice=list.find(v=>v.name===saved)||male||th[0]||null;
+  if(voice)sel.value=list.indexOf(voice);$('vname').textContent=voice?voice.name.slice(0,16):'ค่าเริ่มต้น';
+  sel.onchange=()=>{voice=list[sel.value];$('vname').textContent=voice.name.slice(0,16);try{localStorage.setItem('jarvisVoice',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
+}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function speak(text){
+  return new Promise(res=>{
+    if(!('speechSynthesis' in window)){res();return}
+    speechSynthesis.cancel();
+    const clean=text.replace(/[*#_`>]/g,'').replace(/https?:\S+/g,'');
+    const parts=clean.match(/[^.!?。\n]+[.!?。]?/g)||[clean];let i=0;
+    setMode('speaking');
+    const next=()=>{if(i>=parts.length){setMode('idle');res();return}
+      const u=new SpeechSynthesisUtterance(parts[i++].trim());if(voice){u.voice=voice;u.lang=voice.lang}else u.lang='th-TH';
+      u.pitch=0.78;u.rate=1.05;u.onend=next;u.onerror=next;speechSynthesis.speak(u)};
+    next();
+  });
+}
+
+/* ---------- Log ---------- */
+function add(text,who,link){const d=document.createElement('div');d.className='m '+(who==='u'?'u':'');d.textContent=text;
+  if(link){d.append(' ');const a=document.createElement('a');a.href=link.href;a.target='_blank';a.rel='noopener';a.textContent=link.label;d.append(a)}
+  log.prepend(d);while(log.children.length>12)log.lastChild.remove()}
+
+/* ---------- Local commands ---------- */
+const sites={youtube:'https://www.youtube.com',ยูทูป:'https://www.youtube.com',google:'https://www.google.com',กูเกิล:'https://www.google.com',facebook:'https://www.facebook.com',เฟส:'https://www.facebook.com',tiktok:'https://www.tiktok.com',ติ๊กต๊อก:'https://www.tiktok.com',line:'https://line.me',roblox:'https://www.roblox.com',โรบล็อก:'https://www.roblox.com',github:'https://github.com',map:'https://maps.google.com',แผนที่:'https://maps.google.com'};
+function openLink(href,label,say){add(say,'a',{href,label});try{window.open(href,'_blank')}catch(e){}return say}
+const timers=[];
+function renderTimers(){const el=$('timers');if(!timers.length){el.innerHTML='<div class="tip">ไม่มีตัวจับเวลา</div>';return}
+  el.innerHTML='';timers.forEach(tm=>{const left=Math.max(0,Math.round((tm.end-Date.now())/1000));const r=document.createElement('div');r.className='row';
+  const a=document.createElement('span');a.textContent=tm.label;const b=document.createElement('span');b.textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');r.append(a,b);el.append(r)})}
+setInterval(renderTimers,1000);
+function beep(){try{const ac=new (window.AudioContext||window.webkitAudioContext)();[0,.25,.5].forEach(s=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(.2,ac.currentTime+s);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+s+.2);o.start(ac.currentTime+s);o.stop(ac.currentTime+s+.2)})}catch(e){}}
+const thNum={หนึ่ง:1,สอง:2,สาม:3,สี่:4,ห้า:5,หก:6,เจ็ด:7,แปด:8,เก้า:9,สิบ:10,ยี่สิบ:20,สามสิบ:30};
+
+function local(q){
+  const s=q.toLowerCase().trim();
+  if(/กี่โมง|เวลาเท่าไหร่|what time/.test(s))return 'ขณะนี้เวลา '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น. ครับท่าน';
+  if(/วันอะไร|วันที่เท่าไหร่|วันนี้วัน|what day|date/.test(s))return 'วันนี้คือ'+new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' ครับท่าน';
+  if(/แบต|battery/.test(s))return battery?`แบตเตอรี่เหลือ ${Math.round(battery.level*100)} เปอร์เซ็นต์${battery.charging?' กำลังชาร์จอยู่':''} ครับท่าน`:'เครื่องนี้ไม่ยอมให้ผมอ่านค่าแบตเตอรี่ครับท่าน';
+  let m=s.match(/(?:จับเวลา|ตั้งเวลา|timer)\s*(\d+|[ก-๙]+)\s*(วินาที|นาที|ชั่วโมง|sec|min)?/);
+  if(m){let n=parseInt(m[1])||thNum[m[1]]||0;if(n){const unit=m[2]||'นาที';const ms=n*(/วินาที|sec/.test(unit)?1e3:/ชั่วโมง/.test(unit)?36e5:6e4);
+    const tm={label:n+' '+unit,end:Date.now()+ms};timers.push(tm);renderTimers();
+    tm.id=setTimeout(()=>{timers.splice(timers.indexOf(tm),1);renderTimers();beep();add('ครบ '+tm.label+' แล้วครับท่าน','a');speak('ท่านครับ ครบเวลา '+tm.label+' แล้วครับ')},ms);
+    return `ตั้งเวลา ${n} ${unit} เรียบร้อยครับท่าน`}}
+  if(/ยกเลิก/.test(s)&&/เวลา/.test(s)){timers.forEach(x=>clearTimeout(x.id));timers.length=0;renderTimers();return 'ยกเลิกตัวจับเวลาทั้งหมดแล้วครับท่าน'}
+  m=s.match(/(?:เปิดเพลง|เล่นเพลง|play)\s*(.+)/);
+  if(m)return openLink('https://www.youtube.com/results?search_query='+encodeURIComponent(m[1]),'▶ เปิดใน YouTube','กำลังหาเพลง '+m[1]+' ให้ครับท่าน');
+  m=s.match(/(?:ค้นหา|หาข้อมูล|search)\s*(.+)/);
+  if(m)return openLink('https://www.google.com/search?q='+encodeURIComponent(m[1]),'🔎 ผลการค้นหา','ค้นหา '+m[1]+' ให้แล้วครับท่าน');
+  m=s.match(/เปิด\s*([a-zก-๙]+)/);
+  if(m){const k=Object.keys(sites).find(k=>m[1].includes(k));if(k)return openLink(sites[k],'เปิด '+k,'กำลังเปิด '+k+' ครับท่าน')}
+  if(/ลืมทั้งหมด|ล้างความจำ|reset/.test(s)){history=[];log.innerHTML='';return 'ล้างความจำการสนทนาแล้วครับท่าน'}
+  if(/หยุดฟัง|ปิดระบบ|พักผ่อน/.test(s)){setHF(false);return 'รับทราบครับ ผมจะสแตนด์บายรอคำสั่งครับท่าน'}
+  return null;
+}
+
+/* ---------- AI brain (free Pollinations) ---------- */
+const SYS='คุณคือ J.A.R.V.I.S. ผู้ช่วย AI ส่วนตัวแบบในภาพยนตร์ Iron Man สุภาพแบบพ่อบ้านอังกฤษ ฉลาด ใจเย็น มีอารมณ์ขันแห้งๆ เล็กน้อย เรียกผู้ใช้ว่า "ท่าน" ลงท้ายด้วย "ครับ" ตอบเป็นภาษาไทย (หรือภาษาที่ผู้ใช้พูด) สั้น กระชับ 1-3 ประโยค เพราะคำตอบจะถูกอ่านออกเสียง ห้ามใช้ markdown สัญลักษณ์ หรือรายการหัวข้อ ถ้าไม่แน่ใจข้อมูลล่าสุดให้บอกตรงๆ';
+let last=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function brain(q){
+  const gap=Date.now()-last;if(gap<3200)await wait(3200-gap);last=Date.now();
+  const msgs=[{role:'system',content:SYS+' เวลาตอนนี้: '+new Date().toLocaleString('th-TH')},...history.slice(-10)];
+  try{
+    const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',messages:msgs,private:true})});
+    if(r.status===429){setMode('thinking','คิวเต็ม รอสักครู่…');await wait(12000);return brain(q)}
+    if(!r.ok)throw 0;const j=await r.json();const a=j.choices?.[0]?.message?.content;if(a)return a.trim();throw 0;
+  }catch(e){
+    const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(q)+'?model=openai&private=true&system='+encodeURIComponent(SYS));
+    if(!r.ok)throw new Error('HTTP '+r.status);return (await r.text()).trim();
+  }
+}
+
+async function handle(q){
+  q=q.trim();if(!q)return;add(q,'u');heard.textContent='';
+  const quick=local(q);
+  if(quick!==null){if(quick){if(!/youtube|ค้นหา|กำลังหาเพลง|กำลังเปิด/.test(quick))add(quick,'a');await speak(quick)}afterReply();return}
+  history.push({role:'user',content:q});setMode('thinking');
+  try{const a=await brain(q);history.push({role:'assistant',content:a});add(a,'a');await speak(a)}
+  catch(e){const msg='ขออภัยครับท่าน ระบบเชื่อมต่อขัดข้อง ลองใหม่อีกครั้งครับ';add(msg,'a');await speak(msg)}
+  afterReply();
+}
+function afterReply(){setMode('idle');if(handsFree)setTimeout(listen,350)}
+
+/* ---------- Voice in ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function listen(){
+  if(!SR){setMode('idle','เบราว์เซอร์นี้ไม่รองรับไมค์ — พิมพ์แทนได้ครับ');return}
+  if(recOn){try{rec.stop()}catch(e){}return}
+  speechSynthesis.cancel();
+  rec=new SR();rec.lang='th-TH';rec.interimResults=true;rec.maxAlternatives=1;
+  let final='';
+  rec.onstart=()=>{recOn=true;setMode('listening')};
+  rec.onresult=e=>{let txt='';for(const r of e.results){txt+=r[0].transcript;if(r.isFinal)final=txt}heard.textContent=txt};
+  rec.onerror=e=>{recOn=false;if(e.error==='not-allowed'){setHF(false);setMode('idle','ไมค์ถูกบล็อก — เปิดลิงก์ใน Safari/Chrome แล้วกดอนุญาตครับ')}};
+  rec.onend=()=>{recOn=false;const q=(final||heard.textContent).replace(/^(จาร์วิส|จาวิส|jarvis)\s*/i,'');
+    if(q.trim())handle(q);else{setMode('idle');if(handsFree)setTimeout(listen,500)}};
+  try{rec.start()}catch(e){}
+}
+
+function setHF(on){handsFree=on;const b=$('hf');b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.textContent='ฟังต่อเนื่อง: '+(on?'เปิด':'ปิด')}
+$('hf').onclick=()=>{setHF(!handsFree);if(handsFree&&!recOn&&mode==='idle')listen()};
+
+core.onclick=async()=>{
+  if(!booted){booted=true;const h=new Date().getHours();const g=h<12?'อรุณสวัสดิ์':h<18?'สวัสดีตอนบ่าย':'สวัสดีตอนค่ำ';
+    const hi=g+'ครับท่าน ระบบทั้งหมดออนไลน์ JARVIS พร้อมให้บริการครับ';add(hi,'a');await speak(hi);listen();return}
+  if(mode==='speaking'){speechSynthesis.cancel();setMode('idle');return}
+  listen();
+};
+$('f').onsubmit=e=>{e.preventDefault();const v=$('txt').value;$('txt').value='';booted=true;handle(v)};
+}
+</script>
+</body>
+</html>
