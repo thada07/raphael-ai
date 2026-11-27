@@ -41,6 +41,17 @@ body[data-mode=thinking] .think{opacity:1}
 .holo span{position:absolute;left:8%;right:8%;height:4px;border-radius:2px;background:rgba(94,231,255,.55)}
 @keyframes scan{from{top:-30%}to{top:100%}}
 body[data-mode=analyzing] .holo{opacity:1;transform:perspective(400px) rotateY(-25deg) scale(1)}
+.vbox{width:min(560px,92vw);margin-top:14px;border:1px solid rgba(94,231,255,.3);border-radius:14px;padding:10px 14px;background:rgba(94,231,255,.05)}
+.vbox summary{cursor:pointer;font-weight:600;min-height:32px}
+.vbox label{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:15px}
+.vbox input[type=range]{flex:1;accent-color:#5ee7ff}
+.vbox select{flex:1;font:inherit;font-size:16px;padding:6px;border-radius:8px;background:#0e1630;color:#e6f6ff;border:1px solid rgba(94,231,255,.4)}
+.vbox output{width:3em;text-align:right;color:var(--soft)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.vbox button{font-size:14px;padding:6px 14px;min-height:36px;margin:0;box-shadow:none;background:transparent;border-color:rgba(94,231,255,.35)}
+.vbox button.sel{background:rgba(94,231,255,.2);border-color:var(--glow)}
+.vbox #vTest{margin-top:4px}
+.tip{font-size:13px;color:var(--soft);margin:10px 0 2px}
 @media (prefers-reduced-motion:reduce){.ring{animation:none}}
 </style>
 </head>
@@ -49,10 +60,17 @@ body[data-mode=analyzing] .holo{opacity:1;transform:perspective(400px) rotateY(-
 <div class="status" id="status">กำลังโหลดตัวละคร…</div>
 <div class="wrap"><div class="halo"></div><div class="ring"></div><div id="stage"></div><div class="think"><i></i><i></i><i></i></div><div class="holo"><span style="top:18%;width:70%"></span><span style="top:32%;width:50%"></span><span style="top:46%;width:80%"></span><span style="top:60%;width:40%"></span><span style="top:74%;width:60%"></span></div></div>
 <div class="views"><button data-view="full" class="sel">เต็มตัว</button><button data-view="half">ครึ่งตัว</button></div>
-<div class="views"><button data-engine="free" class="sel">เสียงฟรี</button><button data-engine="eleven">เสียง ElevenLabs</button></div>
 <button id="btn">เริ่มคุยกับราฟาเอล</button>
+<details class="vbox"><summary>ตั้งค่าเสียงราฟาเอล</summary>
+<div class="presets"><button data-preset="raphael">ราฟาเอล (นิ่ง)</button><button data-preset="soft">อ่อนโยน</button><button data-preset="bright">สดใส</button><button data-preset="machine">เครื่องจักร</button></div>
+<label>เสียง <select id="vVoice"></select></label>
+<label>ระดับเสียง <input id="vPitch" type="range" min="0.5" max="1.6" step="0.05"><output id="vPitchOut"></output></label>
+<label>ความเร็ว <input id="vRate" type="range" min="0.6" max="1.4" step="0.05"><output id="vRateOut"></output></label>
+<button id="vTest">ทดสอบเสียง</button>
+<p class="tip">อยากได้เสียงที่ดีขึ้นบน iPhone: ตั้งค่า → การช่วยการเข้าถึง → เนื้อหาที่พูด → เสียง → ไทย → ดาวน์โหลด Kanya (ปรับปรุง/Enhanced) แล้วเลือกที่นี่</p>
+</details>
 <div class="log" id="log" aria-live="polite"></div>
-<div class="credit">3D model: VRM sample by pixiv Inc. · voice: ElevenLabs</div>
+<div class="credit">3D model: VRM sample by pixiv Inc. · AI: Pollinations</div>
 <script src="app.bundle.js"></script>
 </body>
 </html>
