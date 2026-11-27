@@ -76,6 +76,11 @@ button.b.on{background:var(--c);color:#02121c}
   <button class="b" id="hf" type="button" aria-pressed="false">ฟังต่อเนื่อง: ปิด</button>
   <select id="vsel" aria-label="เลือกเสียงในเครื่อง"></select>
 </div>
+<details class="opts" id="setup" style="display:block;width:min(640px,100%)"><summary style="cursor:pointer;min-height:40px;line-height:40px">⚡ ทำให้ตอบเร็ว (ใส่คีย์ Gemini ฟรี)</summary>
+  <div class="tip" style="padding:4px 0 8px">1) เปิด <a style="color:var(--c2)" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ล็อกอิน Google แล้วกด Create API key (ฟรี ไม่ต้องผูกบัตร) 2) คัดลอกคีย์มาวางด้านล่าง คีย์เก็บไว้ในเครื่องนี้เท่านั้น</div>
+  <form class="controls" id="kf" style="padding:0"><input id="key" type="password" placeholder="วางคีย์ Gemini ที่นี่" autocomplete="off"><button class="b" type="submit">บันทึก</button></form>
+  <div class="tip" id="kstat"></div>
+</details>
 <div id="log" aria-live="polite"></div>
 
 <script>
@@ -130,16 +135,16 @@ const netU=()=>{$('net').textContent=navigator.onLine?'ออนไลน์':'�
 function loadVoices(){
   const vs=speechSynthesis.getVoices();if(!vs.length)return;
   const th=vs.filter(v=>/^th/i.test(v.lang)),en=vs.filter(v=>/^en-GB/i.test(v.lang));
-  const list=[...th,...en];const sel=$('vsel');
+  const list=[...th,...en,...vs.filter(v=>!th.includes(v)&&!en.includes(v)&&/^en/i.test(v.lang))];const sel=$('vsel');
   let saved=null;try{saved=localStorage.getItem('jarvisVoice2')}catch(e){}
   sel.innerHTML='';list.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});
   const male=th.find(v=>/male|ชาย|niwat|pattara/i.test(v.name)&&!/female/i.test(v.name));
   const hq=th.find(v=>/narisa|นาริสา/i.test(v.name)&&/enhanced|premium|คุณภาพสูง|ปรับปรุง/i.test(v.name))||th.find(v=>/enhanced|premium|คุณภาพสูง|ปรับปรุง/i.test(v.name))||th.find(v=>/narisa|นาริสา/i.test(v.name));
   voice=th.find(v=>v.name===saved)||male||hq||th[0]||list.find(v=>v.name===saved)||null;
-  if(voice)sel.value=list.indexOf(voice);
+  if(voice)sel.value=list.indexOf(voice);$('vname').textContent=voice?voice.name.slice(0,18):'ค่าเริ่มต้น';
   sel.onchange=()=>{voice=list[sel.value];try{localStorage.setItem('jarvisVoice2',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
 }
-if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;[400,1200,3000].forEach(ms=>setTimeout(loadVoices,ms))}
 let engine='device';
 const showV=()=>{$('vsel').style.display=engine==='device'?'':'none';$('vname').textContent=engine==='device'?(voice?voice.name.slice(0,16):'ในเครื่อง'):'AI '+engine};
 setTimeout(showV,0);
@@ -210,8 +215,22 @@ async function pollBrain(msgs,tries=0){
   if((r.status===402||r.status===429)&&tries<2){const ra=(parseInt(r.headers.get('Retry-After'))||30)*1000;setMode('thinking','คิวเต็ม รอสักครู่…');await wait(ra);return pollBrain(msgs,tries+1)}
   if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();const t=j.choices?.[0]?.message?.content;if(!t)throw new Error('empty');return t.trim();
 }
+let gkey='';try{gkey=localStorage.getItem('jarvisGemini')||''}catch(e){}
+const kstat=$('kstat');const showK=()=>{kstat.textContent=gkey?'ใช้ Gemini อยู่ — ตอบเร็ว ✓ (ลบคีย์: เว้นว่างแล้วกดบันทึก)':'ยังไม่มีคีย์ — ใช้ AI ฟรีที่ต้องรอคิว 30 วินาที';if(gkey)$('setup').open=false};showK();
+$('kf').onsubmit=e=>{e.preventDefault();gkey=$('key').value.trim();$('key').value='';try{gkey?localStorage.setItem('jarvisGemini',gkey):localStorage.removeItem('jarvisGemini')}catch(e){};showK();if(gkey)speak('ได้รับคีย์แล้วครับท่าน ระบบพร้อมตอบเร็วขึ้นครับ')};
+async function geminiBrain(msgs){
+  const sys=msgs[0].content;const contents=msgs.slice(1).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+  for(const model of ['gemini-flash-lite-latest','gemini-flash-latest']){
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(gkey),{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{maxOutputTokens:300,temperature:0.7}})});
+    if(r.status===400||r.status===403){const j=await r.json().catch(()=>({}));throw new Error('key: '+(j.error&&j.error.message||r.status))}
+    if(!r.ok)continue;const j=await r.json();const t=j.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('');if(t&&t.trim())return t.trim();
+  }
+  throw new Error('gemini failed');
+}
 async function brain(q){
   const msgs=[{role:'system',content:SYS+' เวลาตอนนี้: '+new Date().toLocaleString('th-TH')},...history.slice(-10)];
+  if(gkey){try{return await geminiBrain(msgs)}catch(e){console.warn(e);if(/^key/.test(e.message))add('คีย์ Gemini ใช้ไม่ได้ — ตรวจคีย์อีกครั้งครับ','a')}}
   return pollBrain(msgs);
 }
 
