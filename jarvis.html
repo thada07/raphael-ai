@@ -133,7 +133,7 @@ const netU=()=>{$('net').textContent=navigator.onLine?'ออนไลน์':'�
 
 /* ---------- Voice out ---------- */
 function loadVoices(){
-  const vs=speechSynthesis.getVoices();if(!vs.length)return;
+  const seen=new Set();const vs=speechSynthesis.getVoices().filter(v=>{const k=v.name+v.lang;if(seen.has(k))return false;seen.add(k);return true});if(!vs.length)return;
   const th=vs.filter(v=>/^th/i.test(v.lang)),en=vs.filter(v=>/^en-GB/i.test(v.lang));
   const list=[...th,...en,...vs.filter(v=>!th.includes(v)&&!en.includes(v)&&/^en/i.test(v.lang))];const sel=$('vsel');
   let saved=null;try{saved=localStorage.getItem('jarvisVoice2')}catch(e){}
@@ -164,7 +164,28 @@ function deviceSpeak(text){
 async function speak(text){
   stopAll();
   const clean=text.replace(/[*#_`>]/g,'').replace(/https?:\S+/g,'').trim();if(!clean)return;
+  if(gkey&&!gVoiceOff){setMode('thinking','กำลังสร้างเสียง…');try{const url=await geminiTTS(clean);setMode('speaking');
+    await new Promise((res,rej)=>{player.onended=res;player.onerror=()=>rej(new Error('play'));player.src=url;player.play().catch(rej)});setMode('idle');return}
+    catch(e){console.warn('gemini tts',e)}}
   setMode('speaking');await deviceSpeak(clean);setMode('idle');
+}
+let gVoiceOff=false,ttsModel=null;
+function pcmToWav(b64,rate){const bin=atob(b64),n=bin.length,buf=new ArrayBuffer(44+n),v=new DataView(buf);
+  const w=(o,str)=>{for(let i=0;i<str.length;i++)v.setUint8(o+i,str.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n,true);
+  const u=new Uint8Array(buf,44);for(let i=0;i<n;i++)u[i]=bin.charCodeAt(i);return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}))}
+async function geminiTTS(text){
+  const models=ttsModel?[ttsModel]:['gemini-3.1-flash-tts-preview','gemini-2.5-flash-preview-tts','gemini-2.5-flash-tts'];
+  for(const m of models){
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(gkey),{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'พูดภาษาไทยด้วยน้ำเสียงผู้ชายทุ้ม สุภาพ ใจเย็น มั่นใจ แบบพ่อบ้านอังกฤษ พูดเร็วนิดหน่อย: '+text}]}],
+        generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Charon'}}}}})});
+    if(!r.ok){if(r.status===429)throw new Error('quota');continue}
+    const j=await r.json();const p=j.candidates?.[0]?.content?.parts?.find(x=>x.inlineData);if(!p)continue;
+    ttsModel=m;const rate=parseInt((p.inlineData.mimeType.match(/rate=(\d+)/)||[])[1])||24000;return pcmToWav(p.inlineData.data,rate);
+  }
+  gVoiceOff=true;throw new Error('no tts model');
 }
 
 /* ---------- Log ---------- */
