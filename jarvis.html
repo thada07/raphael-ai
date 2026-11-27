@@ -131,12 +131,13 @@ function loadVoices(){
   const vs=speechSynthesis.getVoices();if(!vs.length)return;
   const th=vs.filter(v=>/^th/i.test(v.lang)),en=vs.filter(v=>/^en-GB/i.test(v.lang));
   const list=[...th,...en];const sel=$('vsel');
-  let saved=null;try{saved=localStorage.getItem('jarvisVoice')}catch(e){}
+  let saved=null;try{saved=localStorage.getItem('jarvisVoice2')}catch(e){}
   sel.innerHTML='';list.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});
   const male=th.find(v=>/male|ชาย|niwat|pattara/i.test(v.name)&&!/female/i.test(v.name));
-  voice=th.find(v=>v.name===saved)||male||th[0]||list.find(v=>v.name===saved)||null;
+  const hq=th.find(v=>/narisa|นาริสา/i.test(v.name)&&/enhanced|premium|คุณภาพสูง|ปรับปรุง/i.test(v.name))||th.find(v=>/enhanced|premium|คุณภาพสูง|ปรับปรุง/i.test(v.name))||th.find(v=>/narisa|นาริสา/i.test(v.name));
+  voice=th.find(v=>v.name===saved)||male||hq||th[0]||list.find(v=>v.name===saved)||null;
   if(voice)sel.value=list.indexOf(voice);
-  sel.onchange=()=>{voice=list[sel.value];try{localStorage.setItem('jarvisVoice',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
+  sel.onchange=()=>{voice=list[sel.value];try{localStorage.setItem('jarvisVoice2',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
 }
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
 let engine='device';
