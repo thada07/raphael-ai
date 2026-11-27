@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>J.A.R.V.I.S.</title>
+<script src="https://js.puter.com/v2/"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -74,7 +75,14 @@ button.b.on{background:var(--c);color:#02121c}
 <form class="controls" id="f"><input id="txt" placeholder="พิมพ์คำสั่งถึง JARVIS…" autocomplete="off"><button class="b" type="submit">ส่ง</button></form>
 <div class="opts">
   <button class="b" id="hf" type="button" aria-pressed="false">ฟังต่อเนื่อง: ปิด</button>
-  <select id="vsel" aria-label="เลือกเสียง"></select>
+  <select id="eng" aria-label="แหล่งเสียง">
+    <option value="onyx">เสียงผู้ชาย AI: Onyx (ทุ้ม)</option>
+    <option value="ash">เสียงผู้ชาย AI: Ash</option>
+    <option value="echo">เสียงผู้ชาย AI: Echo</option>
+    <option value="ballad">เสียงผู้ชาย AI: Ballad</option>
+    <option value="device">เสียงในเครื่อง</option>
+  </select>
+  <select id="vsel" aria-label="เลือกเสียงในเครื่อง"></select>
 </div>
 <div id="log" aria-live="polite"></div>
 
@@ -135,22 +143,45 @@ function loadVoices(){
   sel.innerHTML='';list.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});
   const male=th.find(v=>/male|ชาย|niwat|pattara/i.test(v.name)&&!/female/i.test(v.name));
   voice=list.find(v=>v.name===saved)||male||th[0]||null;
-  if(voice)sel.value=list.indexOf(voice);$('vname').textContent=voice?voice.name.slice(0,16):'ค่าเริ่มต้น';
-  sel.onchange=()=>{voice=list[sel.value];$('vname').textContent=voice.name.slice(0,16);try{localStorage.setItem('jarvisVoice',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
+  if(voice)sel.value=list.indexOf(voice);
+  sel.onchange=()=>{voice=list[sel.value];try{localStorage.setItem('jarvisVoice',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
 }
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
-function speak(text){
+let engine='onyx';try{engine=localStorage.getItem('jarvisEngine')||'onyx'}catch(e){}
+const eng=$('eng');eng.value=engine;
+const showV=()=>{$('vsel').style.display=engine==='device'?'':'none';$('vname').textContent=engine==='device'?(voice?voice.name.slice(0,16):'ในเครื่อง'):'AI '+engine};
+eng.onchange=()=>{engine=eng.value;try{localStorage.setItem('jarvisEngine',engine)}catch(e){};showV();speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
+setTimeout(showV,0);
+const player=new Audio();player.playsInline=true;let unlocked=false;
+function unlock(){if(unlocked)return;unlocked=true;player.src='data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAABgAAAykAWlpaWlpaWlpaWlpaWlpaWnt7e3t7e3t7e3t7e3t7e3t7nJycnJycnJycnJycnJycnL29vb29vb29vb29vb29vb293t7e3t7e3t7e3t7e3t7e3t7/////////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQCowAAAAAAAAMpso+sIAAAAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxKMAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';player.play().catch(()=>{})}
+function stopAll(){try{speechSynthesis.cancel()}catch(e){}try{player.pause()}catch(e){}}
+function deviceSpeak(text){
   return new Promise(res=>{
     if(!('speechSynthesis' in window)){res();return}
-    speechSynthesis.cancel();
-    const clean=text.replace(/[*#_`>]/g,'').replace(/https?:\S+/g,'');
-    const parts=clean.match(/[^.!?。\n]+[.!?。]?/g)||[clean];let i=0;
-    setMode('speaking');
-    const next=()=>{if(i>=parts.length){setMode('idle');res();return}
+    const parts=text.match(/[^.!?。\n]+[.!?。]?/g)||[text];let i=0;
+    const next=()=>{if(i>=parts.length){res();return}
       const u=new SpeechSynthesisUtterance(parts[i++].trim());if(voice){u.voice=voice;u.lang=voice.lang}else u.lang='th-TH';
       u.pitch=0.78;u.rate=1.05;u.onend=next;u.onerror=next;speechSynthesis.speak(u)};
     next();
   });
+}
+async function aiSpeak(text){
+  if(!window.puter)throw new Error('no puter');
+  const tts=puter.ai.txt2speech(text,{provider:'openai',model:'gpt-4o-mini-tts',voice:engine,
+    instructions:'Speak Thai naturally like J.A.R.V.I.S. from Iron Man: a calm, deep, confident, polite British-butler male voice, slightly fast, with subtle dry wit.'});
+  const el=await Promise.race([tts,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),20000))]);
+  const src=el&&(el.src||el.currentSrc);if(!src)throw new Error('no audio');
+  await new Promise((res,rej)=>{player.onended=res;player.onerror=()=>rej(new Error('play'));player.src=src;player.play().catch(rej)});
+}
+async function speak(text){
+  stopAll();
+  const clean=text.replace(/[*#_`>]/g,'').replace(/https?:\S+/g,'').trim();if(!clean)return;
+  if(engine!=='device'){
+    setMode('thinking','กำลังสร้างเสียง…');
+    try{setMode('speaking');await aiSpeak(clean);setMode('idle');return}
+    catch(e){console.warn('AI voice failed',e)}
+  }
+  setMode('speaking');await deviceSpeak(clean);setMode('idle');
 }
 
 /* ---------- Log ---------- */
@@ -223,7 +254,7 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 function listen(){
   if(!SR){setMode('idle','เบราว์เซอร์นี้ไม่รองรับไมค์ — พิมพ์แทนได้ครับ');return}
   if(recOn){try{rec.stop()}catch(e){}return}
-  speechSynthesis.cancel();
+  stopAll();
   rec=new SR();rec.lang='th-TH';rec.interimResults=true;rec.maxAlternatives=1;
   let final='';
   rec.onstart=()=>{recOn=true;setMode('listening')};
@@ -238,12 +269,13 @@ function setHF(on){handsFree=on;const b=$('hf');b.classList.toggle('on',on);b.se
 $('hf').onclick=()=>{setHF(!handsFree);if(handsFree&&!recOn&&mode==='idle')listen()};
 
 core.onclick=async()=>{
+  unlock();
   if(!booted){booted=true;const h=new Date().getHours();const g=h<12?'อรุณสวัสดิ์':h<18?'สวัสดีตอนบ่าย':'สวัสดีตอนค่ำ';
     const hi=g+'ครับท่าน ระบบทั้งหมดออนไลน์ JARVIS พร้อมให้บริการครับ';add(hi,'a');await speak(hi);listen();return}
-  if(mode==='speaking'){speechSynthesis.cancel();setMode('idle');return}
+  if(mode==='speaking'){stopAll();setMode('idle');return}
   listen();
 };
-$('f').onsubmit=e=>{e.preventDefault();const v=$('txt').value;$('txt').value='';booted=true;handle(v)};
+$('f').onsubmit=e=>{e.preventDefault();unlock();const v=$('txt').value;$('txt').value='';booted=true;handle(v)};
 }
 </script>
 </body>
