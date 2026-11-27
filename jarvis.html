@@ -141,8 +141,8 @@ function loadVoices(){
   const male=th.find(v=>/male|ชาย|niwat|pattara/i.test(v.name)&&!/female/i.test(v.name));
   const hq=th.find(v=>/narisa|นาริสา/i.test(v.name)&&/enhanced|premium|คุณภาพสูง|ปรับปรุง/i.test(v.name))||th.find(v=>/enhanced|premium|คุณภาพสูง|ปรับปรุง/i.test(v.name))||th.find(v=>/narisa|นาริสา/i.test(v.name));
   voice=th.find(v=>v.name===saved)||male||hq||th[0]||list.find(v=>v.name===saved)||null;
-  if(voice)sel.value=list.indexOf(voice);$('vname').textContent=voice?voice.name.slice(0,18):'ค่าเริ่มต้น';
-  sel.onchange=()=>{voice=list[sel.value];try{localStorage.setItem('jarvisVoice2',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
+  const vi=voice?list.findIndex(v=>v.name===voice.name&&v.lang===voice.lang):-1;if(vi>=0){sel.value=String(vi);voice=list[vi]}$('vname').textContent=voice?voice.name.replace(/^Microsoft\s*/,'').slice(0,18):'ค่าเริ่มต้น';
+  sel.onchange=()=>{voice=list[+sel.value];$('vname').textContent=voice.name.replace(/^Microsoft\s*/,'').slice(0,18);try{localStorage.setItem('jarvisVoice2',voice.name)}catch(e){};speak('เปลี่ยนเสียงเรียบร้อยครับท่าน')};
 }
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;[400,1200,3000].forEach(ms=>setTimeout(loadVoices,ms))}
 let engine='device';
@@ -268,6 +268,7 @@ function afterReply(){setMode('idle');if(handsFree)setTimeout(listen,350)}
 
 /* ---------- Voice in ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(navigator.brave)setTimeout(()=>add('ท่านครับ เบราว์เซอร์ Brave ไม่รองรับการฟังเสียง และเสียงพูดอาจเพี้ยน แนะนำให้เปิด JARVIS ใน Microsoft Edge จะได้เสียงผู้ชายไทยด้วยครับ','a'),300);
 function listen(){
   if(!SR){setMode('idle','เบราว์เซอร์นี้ไม่รองรับไมค์ — พิมพ์แทนได้ครับ');return}
   if(recOn){try{rec.stop()}catch(e){}return}
@@ -276,9 +277,13 @@ function listen(){
   let final='';
   rec.onstart=()=>{recOn=true;setMode('listening')};
   rec.onresult=e=>{let txt='';for(const r of e.results){txt+=r[0].transcript;if(r.isFinal)final=txt}heard.textContent=txt};
-  rec.onerror=e=>{recOn=false;if(e.error==='not-allowed'){setHF(false);setMode('idle','ไมค์ถูกบล็อก — เปิดลิงก์ใน Safari/Chrome แล้วกดอนุญาตครับ')}};
+  let recErr=null;
+  rec.onerror=e=>{recOn=false;recErr=e.error;
+    if(e.error==='not-allowed'){setHF(false);setMode('idle','ไมค์ถูกบล็อก — กดอนุญาตไมโครโฟนที่แถบที่อยู่')}
+    else if(e.error==='network'||e.error==='service-not-allowed'||e.error==='language-not-supported'){setHF(false);
+      setMode('idle',navigator.brave?'Brave ฟังเสียงไม่ได้ — ใช้ Edge แทนครับ':'เบราว์เซอร์นี้ฟังเสียงไม่ได้ — ใช้ Edge/Chrome ครับ')}};
   rec.onend=()=>{recOn=false;const q=(final||heard.textContent).replace(/^(จาร์วิส|จาวิส|jarvis)\s*/i,'');
-    if(q.trim())handle(q);else{setMode('idle');if(handsFree)setTimeout(listen,500)}};
+    if(q.trim())handle(q);else if(!recErr||recErr==='no-speech'||recErr==='aborted'){setMode('idle');if(handsFree)setTimeout(listen,500)}};
   try{rec.start()}catch(e){}
 }
 
